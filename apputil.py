@@ -12,11 +12,18 @@ def survival_demographics(df):
             n_passengers=("PassengerId", "count"),
             n_survivors=("Survived", "sum"),
         )
-        .reset_index()
     )
 
+    all_combinations = pd.MultiIndex.from_product(
+        [df["Pclass"].unique(), df["Sex"].unique(), labels],
+        names=["Pclass", "Sex", "age_group"]
+    )
+
+    grouped = grouped.reindex(all_combinations, fill_value=0).reset_index()
     grouped["survival_rate"] = grouped["n_survivors"] / grouped["n_passengers"]
-    grouped = grouped.sort_values(["Pclass", "Sex", "age_group"]).reset_index(drop=True)
+    grouped.loc[grouped["n_passengers"] == 0, "survival_rate"] = 0
+
+    grouped["age_group"] = pd.Categorical(grouped["age_group"], categories=labels, ordered=True)
     return grouped
 
 def visualize_demographic(df):
@@ -46,11 +53,12 @@ def family_groups(df):
         .reset_index()
     )
     grouped = grouped.sort_values(["Pclass", "family_size"]).reset_index(drop=True)
+    grouped = grouped[["Pclass", "family_size", "n_passengers", "avg_fare", "min_fare", "max_fare"]]
     return grouped
 
 def last_names(df):
     df["last_name"] = df["Name"].apply(lambda x: x.split(",")[0].strip())
-    last_name_counts = df["last_name"].value_counts()
+    last_name_counts = df["last_name"].value_counts().sort_index()
     return last_name_counts
 
 def visualize_families(df):
