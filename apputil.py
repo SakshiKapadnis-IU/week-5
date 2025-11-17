@@ -1,43 +1,94 @@
 import pandas as pd
 import plotly.express as px
 
+
 def survival_demographics(df):
-    bins = [0, 12, 19, 59, 120]
+    """Analyze survival by class, sex, and age groups."""
+
+    # 1. Create age groups
+    bins = [0, 12, 19, 59, 150]
     labels = ["Child", "Teen", "Adult", "Senior"]
-    age_cat = pd.cut(df["Age"], bins=bins, labels=labels, right=True)
-    df["age_group"] = pd.Categorical(age_cat, categories=labels, ordered=True)
+    df["age_group"] = pd.cut(df["Age"], bins=bins, labels=labels, right=True)
 
-    grouped = df.groupby(["Pclass", "Sex", "age_group"]).agg(
-        n_passengers=("PassengerId", "count"),
-        n_survivors=("Survived", "sum"),
+    # 2. Group
+    grouped = (
+        df.groupby(["Pclass", "Sex", "age_group"])
+        .agg(
+            n_passengers=("PassengerId", "count"),
+            n_survivors=("Survived", "sum")
+        )
+        .reset_index()
     )
 
-    all_pclasses = [1, 2, 3]
-    all_sexes = ["female", "male"]
-    all_combinations = pd.MultiIndex.from_product(
-        [all_pclasses, all_sexes, labels],
-        names=["Pclass", "Sex", "age_group"],
-    )
-
-    grouped = grouped.reindex(all_combinations, fill_value=0).reset_index()
+    # 3. Add survival rate
     grouped["survival_rate"] = grouped["n_survivors"] / grouped["n_passengers"]
-    grouped.loc[grouped["n_passengers"] == 0, "survival_rate"] = 0.0
-    grouped["age_group"] = pd.Categorical(grouped["age_group"], categories=labels, ordered=True)
-    grouped = grouped.sort_values(["Pclass", "Sex", "age_group"]).reset_index(drop=True)
+
+    # 4. Sort results
+    grouped = grouped.sort_values(["Pclass", "Sex", "age_group"])
+
     return grouped
 
-def visualize_demographic(df):
+
+def visualize_demographic(table):
+    """Return a Plotly chart that visualizes demographic survival rates."""
     fig = px.bar(
-        df,
+        table,
         x="age_group",
         y="survival_rate",
         color="Sex",
+        barmode="group",
         facet_col="Pclass",
-        text="survival_rate",
         title="Survival Rate by Class, Sex, and Age Group",
-        labels={"survival_rate": "Survival Rate", "age_group": "Age Group"},
-        category_orders={"age_group": ["Child", "Teen", "Adult", "Senior"]}
+        labels={"survival_rate": "Survival Rate"}
     )
-    fig.update_traces(texttemplate='%{text:.2%}', textposition='outside')
-    fig.update_layout(yaxis_tickformat='.0%', yaxis_title="Survival Rate", xaxis_title="Age Group")
+    fig.update_layout(height=500)
+    return fig
+
+
+def family_groups(df):
+    """Analyze family size vs. fare and class."""
+
+    # 1. Create family size variable
+    df["family_size"] = df["SibSp"] + df["Parch"] + 1
+
+    # 2. Group
+    grouped = (
+        df.groupby(["family_size", "Pclass"])
+        .agg(
+            n_passengers=("PassengerId", "count"),
+            avg_fare=("Fare", "mean"),
+            min_fare=("Fare", "min"),
+            max_fare=("Fare", "max")
+        )
+        .reset_index()
+    )
+
+    # 3. Sort clearly
+    grouped = grouped.sort_values(["Pclass", "family_size"])
+
+    return grouped
+
+
+def last_names(df):
+    """Extract last names and count frequency."""
+
+    # Names are formatted: "LastName, Title Firstname..."
+    df["last_name"] = df["Name"].apply(lambda x: x.split(",")[0].strip())
+
+    counts = df["last_name"].value_counts()
+    return counts
+
+
+def visualize_families(table):
+    """Plot average fare by family size and class."""
+
+    fig = px.line(
+        table,
+        x="family_size",
+        y="avg_fare",
+        color="Pclass",
+        markers=True,
+        title="Average Fare by Family Size and Passenger Class"
+    )
+    fig.update_layout(height=500)
     return fig

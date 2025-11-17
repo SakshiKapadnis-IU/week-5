@@ -1,34 +1,43 @@
 import streamlit as st
-
-from apputil import *
-
-# Load Titanic dataset
-df = pd.read_csv('https://raw.githubusercontent.com/leontoddjohnson/datasets/main/data/titanic.csv')
-
-st.write(
-'''
-# Titanic Visualization 1
-
-'''
+from apputil import (
+    survival_demographics,
+    visualize_demographic,
+    family_groups,
+    last_names,
+    visualize_families,
 )
-# Generate and display the figure
-fig1 = visualize_demographic()
-st.plotly_chart(fig1, use_container_width=True)
 
-st.write(
-'''
-# Titanic Visualization 2
-'''
-)
-# Generate and display the figure
-fig2 = visualize_families()
-st.plotly_chart(fig2, use_container_width=True)
+st.header("Exercise 1: Survival Patterns")
 
-st.write(
-'''
-# Titanic Visualization Bonus
-'''
-)
-# Generate and display the figure
-fig3 = visualize_family_size()
-st.plotly_chart(fig3, use_container_width=True)
+# Produce table
+demo_table = survival_demographics(df)
+
+# 6. Your question for Exercise 1
+st.write("**Question:** Did adult women in first class have the highest survival rate among all groups?")
+
+# Show table
+st.dataframe(demo_table)
+
+# Plot
+fig_demo = visualize_demographic(demo_table)
+st.plotly_chart(fig_demo)
+
+
+st.header("Exercise 2: Family Size and Wealth")
+
+family_table = family_groups(df)
+
+# Your question for Exercise 2
+st.write("**Question:** Do larger families in first class consistently pay higher fares on average?")
+
+# Show table
+st.dataframe(family_table)
+
+# Last names result
+name_counts = last_names(df)
+st.write("### Last Name Counts (Do they match family-size patterns?)")
+st.write(name_counts)
+
+# Plot
+fig_family = visualize_families(family_table)
+st.plotly_chart(fig_family)
