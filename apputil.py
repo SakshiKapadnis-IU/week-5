@@ -1,16 +1,15 @@
 import pandas as pd
 import plotly.express as px
+from load_data import load_data
 
+def survival_demographics():
+    df = load_data()
 
-def survival_demographics(df):
-    """Analyze survival by class, sex, and age groups."""
-
-    # 1. Create age groups
-    bins = [0, 12, 19, 59, 150]
+    bins = [0, 12, 19, 59, 200]
     labels = ["Child", "Teen", "Adult", "Senior"]
     df["age_group"] = pd.cut(df["Age"], bins=bins, labels=labels, right=True)
+    df["age_group"] = df["age_group"].astype("category")
 
-    # 2. Group
     grouped = (
         df.groupby(["Pclass", "Sex", "age_group"])
         .agg(
@@ -19,18 +18,12 @@ def survival_demographics(df):
         )
         .reset_index()
     )
-
-    # 3. Add survival rate
     grouped["survival_rate"] = grouped["n_survivors"] / grouped["n_passengers"]
-
-    # 4. Sort results
-    grouped = grouped.sort_values(["Pclass", "Sex", "age_group"])
-
-    return grouped
+    return grouped.sort_values(["Pclass", "Sex", "age_group"])
 
 
-def visualize_demographic(table):
-    """Return a Plotly chart that visualizes demographic survival rates."""
+def visualize_demographic():
+    table = survival_demographics()
     fig = px.bar(
         table,
         x="age_group",
@@ -38,20 +31,17 @@ def visualize_demographic(table):
         color="Sex",
         barmode="group",
         facet_col="Pclass",
-        title="Survival Rate by Class, Sex, and Age Group",
-        labels={"survival_rate": "Survival Rate"}
+        labels={"survival_rate": "Survival Rate"},
+        title="Survival Rate by Class, Sex, and Age Group"
     )
-    fig.update_layout(height=500)
     return fig
 
 
-def family_groups(df):
-    """Analyze family size vs. fare and class."""
+def family_groups():
+    df = load_data()
 
-    # 1. Create family size variable
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
 
-    # 2. Group
     grouped = (
         df.groupby(["family_size", "Pclass"])
         .agg(
@@ -62,26 +52,18 @@ def family_groups(df):
         )
         .reset_index()
     )
-
-    # 3. Sort clearly
-    grouped = grouped.sort_values(["Pclass", "family_size"])
-
-    return grouped
+    return grouped.sort_values(["Pclass", "family_size"])
 
 
-def last_names(df):
-    """Extract last names and count frequency."""
+def last_names():
+    df = load_data()
 
-    # Names are formatted: "LastName, Title Firstname..."
     df["last_name"] = df["Name"].apply(lambda x: x.split(",")[0].strip())
-
-    counts = df["last_name"].value_counts()
-    return counts
+    return df["last_name"].value_counts()
 
 
-def visualize_families(table):
-    """Plot average fare by family size and class."""
-
+def visualize_families():
+    table = family_groups()
     fig = px.line(
         table,
         x="family_size",
@@ -90,5 +72,4 @@ def visualize_families(table):
         markers=True,
         title="Average Fare by Family Size and Passenger Class"
     )
-    fig.update_layout(height=500)
     return fig
