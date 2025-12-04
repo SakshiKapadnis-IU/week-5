@@ -1,44 +1,73 @@
 import pandas as pd
 import plotly.express as px
-from load_data import load_data
 
+
+# ---------------------------------------------------------
+# Load Titanic dataset
+# ---------------------------------------------------------
+def load_titanic():
+    """Load Titanic dataset."""
+    url = "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+    return pd.read_csv(url)
+
+
+# ---------------------------------------------------------
+# Exercise 1 — Survival Patterns
+# ---------------------------------------------------------
 def survival_demographics():
-    df = load_data()
+    """
+    Create age groups, group by class/sex/age group,
+    and calculate survival statistics.
+    """
+    df = load_titanic().copy()
 
-    bins = [0, 12, 19, 59, 200]
+    # Create age category column
+    bins = [0, 12, 19, 59, 120]
     labels = ["Child", "Teen", "Adult", "Senior"]
-    df["age_group"] = pd.cut(df["Age"], bins=bins, labels=labels, right=True)
-    df["age_group"] = df["age_group"].astype("category")
 
+    df["age_group"] = pd.cut(df["Age"], bins=bins, labels=labels, right=True)
+
+    # Group
     grouped = (
         df.groupby(["Pclass", "Sex", "age_group"])
         .agg(
             n_passengers=("PassengerId", "count"),
-            n_survivors=("Survived", "sum")
+            n_survivors=("Survived", "sum"),
         )
         .reset_index()
     )
+
     grouped["survival_rate"] = grouped["n_survivors"] / grouped["n_passengers"]
-    return grouped.sort_values(["Pclass", "Sex", "age_group"])
+
+    # Sort for readability
+    grouped = grouped.sort_values(["Pclass", "Sex", "age_group"])
+
+    return grouped
 
 
-def visualize_demographic():
-    table = survival_demographics()
+def visualize_demographic(df):
+    """
+    Create a Plotly visualization based on your question.
+    Here: Compare survival rate across sex & age groups by class.
+    """
     fig = px.bar(
-        table,
+        df,
         x="age_group",
         y="survival_rate",
         color="Sex",
-        barmode="group",
         facet_col="Pclass",
-        labels={"survival_rate": "Survival Rate"},
-        title="Survival Rate by Class, Sex, and Age Group"
+        barmode="group",
+        title="Survival Rates by Age Group, Gender, and Passenger Class",
     )
     return fig
 
 
+# ---------------------------------------------------------
+# Exercise 2 — Family Size & Wealth
+# ---------------------------------------------------------
 def family_groups():
-    df = load_data()
+    """Group by family size & class, compute fare stats."""
+    df = load_titanic().copy()
 
     df["family_size"] = df["SibSp"] + df["Parch"] + 1
 
@@ -48,28 +77,61 @@ def family_groups():
             n_passengers=("PassengerId", "count"),
             avg_fare=("Fare", "mean"),
             min_fare=("Fare", "min"),
-            max_fare=("Fare", "max")
+            max_fare=("Fare", "max"),
         )
         .reset_index()
     )
-    return grouped.sort_values(["Pclass", "family_size"])
+
+    grouped = grouped.sort_values(["Pclass", "family_size"])
+    return grouped
 
 
 def last_names():
-    df = load_data()
+    """Extract last names and count occurrences."""
+    df = load_titanic().copy()
 
-    df["last_name"] = df["Name"].apply(lambda x: x.split(",")[0].strip())
+    df["last_name"] = df["Name"].str.extract(r"^([^,]+)")
     return df["last_name"].value_counts()
 
 
-def visualize_families():
-    table = family_groups()
+def visualize_families(df):
+    """
+    Example visualization:
+    Average fare by family size across classes.
+    """
     fig = px.line(
-        table,
+        df,
         x="family_size",
         y="avg_fare",
         color="Pclass",
         markers=True,
-        title="Average Fare by Family Size and Passenger Class"
+        title="Average Fare by Family Size and Passenger Class",
+    )
+    return fig
+
+
+# ---------------------------------------------------------
+# Bonus — Age Division Within Class
+# ---------------------------------------------------------
+def determine_age_division():
+    """Create a column marking whether passenger is older than class median age."""
+    df = load_titanic().copy()
+
+    df["median_class_age"] = df.groupby("Pclass")["Age"].transform("median")
+    df["older_passenger"] = df["Age"] > df["median_class_age"]
+
+    return df
+
+
+def visualize_age_division(df):
+    """
+    Visualize proportion of older passengers by class & survival.
+    """
+    fig = px.histogram(
+        df,
+        x="Pclass",
+        color="older_passenger",
+        barmode="group",
+        title="Older vs Younger Passengers by Class",
     )
     return fig

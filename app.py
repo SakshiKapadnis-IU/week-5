@@ -5,25 +5,53 @@ from apputil import (
     family_groups,
     last_names,
     visualize_families,
+    determine_age_division,
+    visualize_age_division,
 )
 
-st.header("Exercise 1: Survival Patterns")
-
-st.write("**Question:** Did adult women in first class have the highest survival rate?")
-
-demo_table = survival_demographics()
-st.dataframe(demo_table)
-st.plotly_chart(visualize_demographic())
+st.title("Week 5 – Titanic Data Analysis App")
 
 
-st.header("Exercise 2: Family Size and Wealth")
+# ---------------------------------------------------------
+# Exercise 1
+# ---------------------------------------------------------
+st.header("Exercise 1: Survival Demographics")
 
-st.write("**Question:** Do larger families in first class consistently pay higher fares?")
+# Your question:
+st.write("**Question:** How do survival rates differ between men and women across each age group within each passenger class?")
 
-family_table = family_groups()
-st.dataframe(family_table)
+df_demo = survival_demographics()
+st.write(df_demo)
 
-st.write("### Last Name Counts")
+fig1 = visualize_demographic(df_demo)
+st.plotly_chart(fig1)
+
+
+# ---------------------------------------------------------
+# Exercise 2
+# ---------------------------------------------------------
+st.header("Exercise 2: Family Size & Wealth")
+
+# Your question:
+st.write("**Question:** Do larger families tend to pay higher or lower fares across passenger classes?")
+
+df_fam = family_groups()
+st.write(df_fam)
+
+fig2 = visualize_families(df_fam)
+st.plotly_chart(fig2)
+
+st.subheader("Last Names Count")
 st.write(last_names())
 
-st.plotly_chart(visualize_families())
+
+# ---------------------------------------------------------
+# Bonus
+# ---------------------------------------------------------
+st.header("Bonus: Age Division by Class")
+
+df_age = determine_age_division()
+st.write(df_age.head())
+
+fig3 = visualize_age_division(df_age)
+st.plotly_chart(fig3)
