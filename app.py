@@ -17,7 +17,6 @@ st.title("Week 5 – Titanic Data Analysis App")
 # ---------------------------------------------------------
 st.header("Exercise 1: Survival Demographics")
 
-# Your question:
 st.write("**Question:** How do survival rates differ between men and women across each age group within each passenger class?")
 
 df_demo = survival_demographics()
@@ -32,7 +31,6 @@ st.plotly_chart(fig1)
 # ---------------------------------------------------------
 st.header("Exercise 2: Family Size & Wealth")
 
-# Your question:
 st.write("**Question:** Do larger families tend to pay higher or lower fares across passenger classes?")
 
 df_fam = family_groups()
